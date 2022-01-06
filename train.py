@@ -7,39 +7,52 @@ from torch.utils.data import DataLoader
 from torch import optim
 from torch import nn
 import torch
-
-data_dir = r'D:\MASKpicture\train_pig_body'
-label_dir = r'D:\MASKpicture\label_pig_body'
+from torchvision.datasets.folder import default_loader
 
 
 class MydataSet(Dataset):
-    def __init__(self,
-                 data_dir,
-                 label_dir):
+    def __init__(self, transform=None, loader=default_loader):
         super(MydataSet, self).__init__()
-        self.dataset = os.listdir(data_dir)
-        self.dataset = self.dataset
+        self.ground_truth_path = '/home/gaotiegang01/liuhao/dataset/CASIAv2/CASIA2.0_Groundtruth'
+
+        # Au:0 Tp:1
+        self.img_tag = []
+
+        self.au_path = '/home/gaotiegang01/liuhao/dataset/CASIAv2/CASIA2.0_revised/Au'
+        au_path_list = '/home/gaotiegang01/liuhao/dataset/CASIAv2/CASIA2.0_revised/au_list.txt'
+        self.imgs_name = []
+        with open(au_path_list, "r") as f:
+            data = f.readline()
+            self.imgs_name.append(data)
+            self.img_tag.append(0)
+
+        self.tp_path = '/home/gaotiegang01/liuhao/dataset/CASIAv2/CASIA2.0_revised/Tp'
+        tp_path_list = '/home/gaotiegang01/liuhao/dataset/CASIAv2/CASIA2.0_revised/tp_list.txt'
+        with open(tp_path_list, "r") as f:
+            data = f.readline()
+            self.imgs_name.append(data)
+            self.img_tag.append(1)
+
+        self.loader = loader
+        self.transform = transform
 
     def __getitem__(self, index):
-        try:
-            image = Image.open(os.path.join(data_dir, self.dataset[index])).convert('RGB')
-            label = Image.open(os.path.join(label_dir, self.dataset[index])).convert('L')
-            pad = max(image.size)
-            size = (pad, pad)
-            transform = transforms.Compose([
-                transforms.CenterCrop(size),
-                transforms.Resize(490),
-                transforms.ToTensor()
-            ])
-            imagedata = transform(image)
-            labeldata = transform(label)
+        img_name = self.imgs_name[index]
+        img_tag = self.img_tag[index]
 
-            return imagedata, labeldata
-        except:
-            return self.__getitem__(index + 1)
+        if img_tag == 0:  # 未篡改图像，生成全黑GroundTruth
+            img = self.loader(os.path.join(self.au_path, img_name))
+            img = self.transform(img)
+            ground_truth = torch.zeros(size=img.shape)
+        else:  # 篡改图像，读取对应的GroundTruth
+            img = self.loader(os.path.join(self.tp_path, img_name))
+            img = self.transform(img)
+            ground_truth = self.loader(os.path.join(self.ground_truth_path, img_name))
+
+        return img, ground_truth
 
     def __len__(self):
-        return len(self.dataset)
+        return len(self.imgs_name)
 
 
 if __name__ == '__main__':
