@@ -48,6 +48,7 @@ class MydataSet(Dataset):
             img = self.loader(os.path.join(self.tp_path, img_name))
             img = self.transform(img)
             ground_truth = self.loader(os.path.join(self.ground_truth_path, img_name))
+            ground_truth = transforms.ToTensor()(ground_truth)
 
         return img, ground_truth
 
@@ -64,17 +65,17 @@ if __name__ == '__main__':
     optimizer = optim.Adam(net.parameters(), lr=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=1e-4)
     net.train()
     for epoch in range(300):
-        for data, label in dataloader:
+        for data, ground_truth in dataloader:
             data = data.cuda()
-            label = label.cuda()
+            ground_truth = ground_truth.cuda()
             o0, o1, o2, o3, o4, o5, o6 = net(data)
-            loss0 = Lossfuction(o0, label)
-            loss1 = Lossfuction(o1, label)
-            loss2 = Lossfuction(o2, label)
-            loss3 = Lossfuction(o3, label)
-            loss4 = Lossfuction(o4, label)
-            loss5 = Lossfuction(o5, label)
-            loss6 = Lossfuction(o6, label)
+            loss0 = Lossfuction(o0, ground_truth)
+            loss1 = Lossfuction(o1, ground_truth)
+            loss2 = Lossfuction(o2, ground_truth)
+            loss3 = Lossfuction(o3, ground_truth)
+            loss4 = Lossfuction(o4, ground_truth)
+            loss5 = Lossfuction(o5, ground_truth)
+            loss6 = Lossfuction(o6, ground_truth)
             loss = loss0 + loss1 + loss2 + loss3 + loss4 + loss5 + loss6
             optimizer.zero_grad()
             loss.backward()
