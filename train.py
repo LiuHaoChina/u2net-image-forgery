@@ -19,26 +19,25 @@ class MydataSet(Dataset):
     def __init__(self, transform=None, loader=default_loader, start=0, end=20000):
         super(MydataSet, self).__init__()
         self.ground_truth_path = '/home/gaotiegang01/liuhao/dataset/CASIAv2/CASIA2.0_Groundtruth'
-
+        self.imgs_name = []
         # Au:0 Tp:1
         self.img_tag = []
 
-        self.au_path = '/home/gaotiegang01/liuhao/dataset/CASIAv2/CASIA2.0_revised/Au'
-        au_path_list = '/home/gaotiegang01/liuhao/dataset/CASIAv2/CASIA2.0_revised/au_list.txt'
-        self.imgs_name = []
-        f = open(au_path_list, "r")
-        lines = f.readlines()
-        count = 0
-        for line in lines:
-            line = line.replace('\n', '')
-            # 天知道这个txt从哪冒出来的
-            if line.endswith('.txt'):
-                continue
-            count += 1
-            if count > end or count < start:
-                continue
-            self.imgs_name.append(line)
-            self.img_tag.append(0)
+        # self.au_path = '/home/gaotiegang01/liuhao/dataset/CASIAv2/CASIA2.0_revised/Au'
+        # au_path_list = '/home/gaotiegang01/liuhao/dataset/CASIAv2/CASIA2.0_revised/au_list.txt'
+        # f = open(au_path_list, "r")
+        # lines = f.readlines()
+        # count = 0
+        # for line in lines:
+        #     line = line.replace('\n', '')
+        #     # 天知道这个txt从哪冒出来的
+        #     if line.endswith('.txt'):
+        #         continue
+        #     count += 1
+        #     if count > end or count < start:
+        #         continue
+        #     self.imgs_name.append(line)
+        #     self.img_tag.append(0)
 
         self.tp_path = '/home/gaotiegang01/liuhao/dataset/CASIAv2/CASIA2.0_revised/Tp'
         tp_path_list = '/home/gaotiegang01/liuhao/dataset/CASIAv2/CASIA2.0_revised/tp_list.txt'
@@ -100,14 +99,14 @@ if __name__ == '__main__':
     train_dataset = MydataSet(transform=transform_train, start=0, end=4500)
     train_dataloader = DataLoader(train_dataset, batch_size=48, shuffle=True, num_workers=4)
 
-    test_dataset = MydataSet(transform=transform_train, start=4500, end=4510)
+    test_dataset = MydataSet(transform=transform_train, start=4500, end=4520)
     test_dataloader = DataLoader(test_dataset, batch_size=10, shuffle=False, num_workers=0)
 
     Lossfuction = nn.BCELoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=1e-4)
     step_lr = torch.optim.lr_scheduler.StepLR(optimizer=optimizer, step_size=200, gamma=0.7)
 
-    for epoch in range(31):
+    for epoch in range(100):
         loss_sum = 0
         iter_sum = 0
         model.train()
@@ -129,7 +128,7 @@ if __name__ == '__main__':
             loss_sum += loss.item()
             iter_sum += 1
             step_lr.step()
-            if index % 50 == 0:
+            if index % 10 == 0:
                 print(f'epoch={epoch} loss_sum={loss_sum} iter={iter_sum} loss={loss_sum / iter_sum}')
 
         print(f'==>epoch={epoch} loss={loss_sum/iter_sum}\n')
