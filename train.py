@@ -12,6 +12,7 @@ import os
 import torchvision
 import random
 import numpy as np
+import time
 os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 
@@ -96,7 +97,7 @@ if __name__ == '__main__':
         transforms.ToTensor(),
     ])
 
-    train_dataset = MydataSet(transform=transform_train, start=0, end=4500)
+    train_dataset = MydataSet(transform=transform_train, start=0, end=3300)
     train_dataloader = DataLoader(train_dataset, batch_size=48, shuffle=True, num_workers=4)
 
     test_dataset = MydataSet(transform=transform_train, start=4500, end=4520)
@@ -104,9 +105,10 @@ if __name__ == '__main__':
 
     Lossfuction = nn.BCELoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=1e-4)
-    step_lr = torch.optim.lr_scheduler.StepLR(optimizer=optimizer, step_size=200, gamma=0.7)
+    step_lr = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer=optimizer, T_max=100)
 
-    for epoch in range(100):
+    for epoch in range(1000):
+        start = time.time()
         loss_sum = 0
         iter_sum = 0
         model.train()
@@ -127,11 +129,10 @@ if __name__ == '__main__':
             optimizer.step()
             loss_sum += loss.item()
             iter_sum += 1
-            step_lr.step()
             if index % 10 == 0:
                 print(f'epoch={epoch} loss_sum={loss_sum} iter={iter_sum} loss={loss_sum / iter_sum}')
-
-        print(f'==>epoch={epoch} loss={loss_sum/iter_sum}\n')
+        step_lr.step()
+        print(f'==>epoch={epoch} loss={loss_sum/iter_sum} cost_time={time.time()-start}\n')
 
         if epoch % 1 == 0:
             model.eval()
@@ -146,3 +147,4 @@ if __name__ == '__main__':
                     im.save(os.path.join('./res', imgs_name[i])+'.png')
 
         torch.save(model.state_dict(), 'epoch='+str(epoch)+'.pth')
+
